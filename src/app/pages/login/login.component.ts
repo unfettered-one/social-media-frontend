@@ -1,8 +1,10 @@
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
-import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpHeaders ,HttpResponse} from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router'; 
+
 
 @Component({
   selector: 'app-login',
@@ -17,7 +19,7 @@ export class LoginComponent {
   message: string = '';
   messageClass: string = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient,private router: Router) {}
 
   async login() {
     const body = new HttpParams()
@@ -26,23 +28,29 @@ export class LoginComponent {
 
     try {
       const response = await firstValueFrom(
-        this.http.post<{ success: boolean; access_token?: string; message: string }>(
+        this.http.post<HttpResponse<any>>(
           'http://127.0.0.1:8000/login',
           body.toString(),
           {
             headers: new HttpHeaders({
               'Content-Type': 'application/x-www-form-urlencoded'
-            })
+            }),
+            observe: 'response'
           }
+          
         )
       );
-      
-      if (response.success && response.access_token) {
-        localStorage.setItem('bearer_token', response.access_token); // Store token securely
+      const responseBody = response.body as{access_token?: string,token_type?: string,expires_in?: number};
+      if (response.status==200 ) {
+        if (response.body!=null && responseBody.access_token!=null && responseBody.token_type!=null && responseBody.expires_in!=null) 
+          
+          {localStorage.setItem(responseBody.token_type, responseBody.access_token);} // Store token securely
+
         this.message = 'Login successful!';
         this.messageClass = 'success';
+        this.router.navigate(['/']);
       } else {
-        this.message = response.message || 'Invalid username or password';
+        this.message =  'Invalid username or password';
         this.messageClass = 'error';
       }
     } catch (error: any) {
