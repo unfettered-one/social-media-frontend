@@ -48,7 +48,7 @@ export class LoginComponent {
 
         this.message = 'Login successful!';
         this.messageClass = 'success';
-        this.router.navigate(['/']);
+        this.router.navigate(['home']);
       } else {
         this.message =  'Invalid username or password';
         this.messageClass = 'error';
